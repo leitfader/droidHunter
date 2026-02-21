@@ -160,6 +160,10 @@ body::after {
   object-fit: contain;
 }
 
+:root[data-theme="dark"] .logo img {
+  filter: invert(1) brightness(1.05);
+}
+
 .logo-ring {
   fill: none;
   stroke: rgba(42, 169, 255, 0.4);
