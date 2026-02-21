@@ -94,6 +94,7 @@ function formToPayload(form) {
   const adbScan = form.querySelector('input[name="adb_scan"]');
   const auroraRandom = form.querySelector('input[name="aurora_random"]');
   const randomContinuous = form.querySelector('input[name="random_continuous"]');
+  const keepApk = form.querySelector('input[name="keep_apk"]');
   if (authEnabled) payload.auth_enabled = authEnabled.checked;
   if (writeEnabled) payload.write_enabled = writeEnabled.checked;
   if (fastExtract) payload.fast_extract = fastExtract.checked;
@@ -106,6 +107,7 @@ function formToPayload(form) {
   if (adbScan) payload.adb_scan = adbScan.checked;
   if (auroraRandom) payload.aurora_random = auroraRandom.checked;
   if (randomContinuous) payload.random_continuous = randomContinuous.checked;
+  if (keepApk) payload.keep_apk = keepApk.checked;
 
   if (payload.scan_rate) payload.scan_rate = parseFloat(payload.scan_rate);
   if (payload.processes) payload.processes = parseInt(payload.processes, 10);

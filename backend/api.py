@@ -70,6 +70,7 @@ class CreateJobRequest(BaseModel):
     app_id: Optional[str] = None
     processes: Optional[int] = None
     timeout_minutes: Optional[int] = None
+    keep_apk: bool = False
 
 
 class TopChartsRequest(BaseModel):
@@ -593,7 +594,7 @@ def create_download(payload: CreateJobRequest) -> Dict[str, Any]:
         "dispenser_url": payload.dispenser_url,
         "device_props": payload.device_props,
         "locale": payload.locale,
-        "keep_apk": False,
+        "keep_apk": bool(payload.keep_apk),
         "scan_source": "aurora" if payload.package_name else "local",
         "auth_enabled": payload.auth_enabled,
         "write_enabled": payload.write_enabled,
@@ -663,7 +664,7 @@ def create_job(payload: CreateJobRequest) -> Dict[str, Any]:
         "dispenser_url": payload.dispenser_url,
         "device_props": payload.device_props,
         "locale": payload.locale,
-        "keep_apk": False,
+        "keep_apk": bool(payload.keep_apk),
         "scan_source": scan_source,
         "auth_enabled": payload.auth_enabled,
         "write_enabled": payload.write_enabled,

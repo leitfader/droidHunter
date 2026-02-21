@@ -45,8 +45,8 @@ import okhttp3.MediaType.Companion.toMediaType
 private const val DEFAULT_DISPENSER = "https://auroraoss.com/api/auth"
 private const val DEFAULT_DISPENSER_USER_AGENT = "com.aurora.store-4.8.1-73"
 private const val DEFAULT_USER_AGENT =
-    "Android-Finsky/21.5.17-21 [0] [PR] 326734551 (api=3,versionCode=82151710,sdk=36,device=emu64xa,hardware=ranchu,product=sdk_gphone64_x86_64,platformVersionRelease=16,model=sdk_gphone64_x86_64,buildId=BE2A.250530.026.D1,isWideScreen=0,supportedAbis=x86_64;arm64-v8a)"
-private val DEFAULT_LOCALE: Locale = Locale.forLanguageTag("en-001")
+    "Android-Finsky/21.5.17-21 [0] [PR] 326734551 (api=3,versionCode=82151710,sdk=33,device=oriole,hardware=oriole,product=oriole,platformVersionRelease=13,model=Pixel 6,buildId=TQ3A.230901.001,isWideScreen=0,supportedAbis=arm64-v8a)"
+private val DEFAULT_LOCALE: Locale = Locale.forLanguageTag("en-US")
 
 @Serializable
 data class DispenserAuth(

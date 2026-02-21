@@ -929,19 +929,34 @@ async function loadScan() {
             foundEntry = true;
             const summaryByMode = {};
             const prefixes = [];
+            const outputRoot = job.output_root ? String(job.output_root).replace(/\/+$/, "") : "";
             entries.forEach((entry) => {
               const mode = entry.mode || "unauth";
               summaryByMode[mode] = entry.summary || [];
               if (entry.results_dir) {
-                prefixes.push(`${entry.results_dir}`.replace(/\/+$/, "") + "/");
+                let resolved = String(entry.results_dir);
+                if (!resolved.startsWith("/") && outputRoot) {
+                  resolved = `${outputRoot}/${resolved}`;
+                }
+                prefixes.push(resolved.replace(/\/+$/, "") + "/");
               }
             });
             job.package_name = selectedPackage;
             job.summary = summaryByMode;
             if (prefixes.length) {
-              job.files = (job.files || []).filter((file) => {
+              const filtered = (job.files || []).filter((file) => {
                 const path = file.path || "";
                 return prefixes.some((prefix) => path.startsWith(prefix));
+              });
+              if (filtered.length) {
+                job.files = filtered;
+              }
+            }
+            if (!job.files || job.files.length === 0) {
+              const token = `/${selectedPackage}/`;
+              job.files = (job.files || []).filter((file) => {
+                const path = file.path || "";
+                return path.includes(token);
               });
             }
           }

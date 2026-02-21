@@ -42,9 +42,22 @@ PACKAGE_CANDIDATE_PATTERNS = [
     re.compile(r"details\\?id=([A-Za-z0-9._-]+)"),
     re.compile(r"details\?id=([A-Za-z0-9._-]+)"),
     re.compile(r"data-docid=\"([A-Za-z0-9._-]+)\""),
+    re.compile(r"data-docid=\"?([A-Za-z0-9._-]+)\"?"),
+    re.compile(r"data-docid=['\"]([A-Za-z0-9._-]+)['\"]"),
+    re.compile(r"\"docid\":\"([A-Za-z0-9._-]+)\""),
+    re.compile(r"\"appId\":\"([A-Za-z0-9._-]+)\""),
+    re.compile(r"\"packageName\":\"([A-Za-z0-9._-]+)\""),
     re.compile(r"id=([A-Za-z0-9._-]+)"),
 ]
 PLAY_URL_HOSTS = {"play.google.com", "market.android.com"}
+NON_PACKAGE_TOKENS = {
+    "play.google.com",
+    "market.android.com",
+    "google.com",
+    "googleusercontent.com",
+    "gstatic.com",
+    "googleapis.com",
+}
 
 
 def _normalize_play_text(text: str) -> str:
@@ -71,6 +84,26 @@ def _extract_package_candidates(html: str) -> list[str]:
                 continue
             seen.add(candidate)
             results.append(candidate)
+    return results
+
+
+def _extract_fuzzy_packages(text: str) -> list[str]:
+    if not text:
+        return []
+    normalized = _normalize_play_text(text)
+    tokens = re.findall(r"(?:[A-Za-z0-9_]+\\.)+[A-Za-z0-9_]+", normalized)
+    results: list[str] = []
+    seen: set[str] = set()
+    for token in tokens:
+        candidate = token.strip()
+        if not PACKAGE_NAME_RE.match(candidate):
+            continue
+        if candidate.lower() in NON_PACKAGE_TOKENS:
+            continue
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        results.append(candidate)
     return results
 
 
@@ -190,6 +223,9 @@ def resolve_package_name(query: str) -> str:
         candidates = _extract_package_candidates(html or "")
         if candidates:
             return candidates[0]
+        fuzzy = _extract_fuzzy_packages(html or "")
+        if fuzzy:
+            return fuzzy[0]
 
     if html:
         raise AuroraDownloadError("No package found for that app name.")
