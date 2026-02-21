@@ -424,6 +424,10 @@ def _run_random_aurora_scan(
     continuous = bool(config.get("random_continuous", False))
     if continuous:
         count = max(count, 1)
+    max_attempts = None
+    if not continuous:
+        base_attempts = max(attempts, 1)
+        max_attempts = max(count, count * base_attempts * 3)
     terms_path = Path(str(config.get("random_terms_file"))) if config.get("random_terms_file") else None
     terms = _load_random_terms(terms_path)
     seen_packages: set[str] = set()
@@ -445,6 +449,10 @@ def _run_random_aurora_scan(
     }
     batch_results = []
     failures = []
+    consecutive_failures = 0
+    attempted = 0
+    backoff_base = 2.0
+    backoff_cap = 30.0
 
     timeout_minutes = _coerce_float(config.get("timeout_minutes"), 0)
     timeout_seconds = timeout_minutes * 60 if timeout_minutes > 0 else 15.0
@@ -462,8 +470,11 @@ def _run_random_aurora_scan(
         or "auto"
     ).strip().lower()
     chart_pool: list[str] = []
+    chart_refresh_interval = 60.0
+    last_chart_refresh = 0.0
     if random_source in {"charts", "top_charts", "auto"}:
         chart_pool = _load_top_chart_pool(config, progress_cb, blacklist)
+        last_chart_refresh = time.time()
 
     scanned = 0
     while True:
@@ -471,11 +482,25 @@ def _run_random_aurora_scan(
             break
         if not continuous and scanned >= count:
             break
+        if not continuous and max_attempts is not None and attempted >= max_attempts:
+            failures.append(
+                {
+                    "index": scanned + len(failures) + 1,
+                    "error": f"Reached max attempts ({max_attempts}) before completing scan count.",
+                }
+            )
+            break
+        attempted += 1
         package_name = None
         last_error = None
         if random_source in {"charts", "top_charts", "auto"}:
             if not chart_pool:
-                chart_pool = _load_top_chart_pool(config, progress_cb, blacklist)
+                now = time.time()
+                if now - last_chart_refresh >= chart_refresh_interval:
+                    chart_pool = _load_top_chart_pool(config, progress_cb, blacklist)
+                    last_chart_refresh = now
+                else:
+                    time.sleep(min(5.0, chart_refresh_interval - (now - last_chart_refresh)))
             if chart_pool:
                 if progress_cb:
                     progress_cb("selecting_from_top_charts", current_package="")
@@ -518,12 +543,16 @@ def _run_random_aurora_scan(
                 break
 
         if not package_name:
+            consecutive_failures += 1
             failures.append(
                 {
                     "index": scanned + len(failures) + 1,
                     "error": last_error or "No package found",
                 }
             )
+            if consecutive_failures >= 3:
+                delay = min(backoff_cap, backoff_base * (2 ** min(consecutive_failures - 3, 4)))
+                time.sleep(delay)
             continue
 
         apk_path = downloads_dir / f"{package_name}.apk"
@@ -549,6 +578,10 @@ def _run_random_aurora_scan(
                 }
             )
             _cleanup_downloaded_apk(apk_path)
+            consecutive_failures += 1
+            if consecutive_failures >= 3:
+                delay = min(backoff_cap, backoff_base * (2 ** min(consecutive_failures - 3, 4)))
+                time.sleep(delay)
             continue
 
         if progress_cb:
@@ -637,6 +670,7 @@ def _run_random_aurora_scan(
         _save_blacklist(blacklist)
         _cleanup_downloaded_apk(apk_path)
         scanned += 1
+        consecutive_failures = 0
 
     combined_results = {
         "targets": combined_targets.to_dict(),
