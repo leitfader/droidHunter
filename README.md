@@ -1,5 +1,5 @@
 # droidHunter
-NOTE: This isn't a completed project I am willing to resolve the issues you've had and also would love to accept any of your contributions to the project. 
+NOTE: This project isn't completed. I am willing to resolve the issues you've had and also would love to accept any of your contributions to the project. 
 Local toolchain for scanning Android APKs for Firebase exposure. It can:
 - Download APKs anonymously via Aurora's token dispenser (Google Play)
 - Scan local APKs or a directory of APKs
