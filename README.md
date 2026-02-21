@@ -47,6 +47,11 @@ Build once:
 ```bash
 ./build-aurora.sh
 ```
+This build can also run standalone to download apps by : 
+```
+./aurora-downloader/build/install/aurora-downloader/bin/aurora-downloader --package foo.bar \
+          --output example.apk
+```
 
 Requires a local Gradle installation and JDK 21+. Set `JAVA_HOME` (or `AURORA_JAVA_HOME`) to a JDK 21 install.
 
