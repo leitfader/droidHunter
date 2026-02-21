@@ -11,6 +11,8 @@ const scanOptionsForm = document.getElementById("scanOptions");
 const apksList = document.getElementById("apksList");
 const refreshApksButton = document.getElementById("refreshApks");
 const startScanButton = document.getElementById("startScan");
+const downloadApkButton = document.getElementById("downloadApk");
+const downloadResult = document.getElementById("downloadResult");
 const stopRandomScanButton = document.getElementById("stopRandomScan");
 const deepScanPresetButton = document.getElementById("deepScanPreset");
 const testTopChartsButton = document.getElementById("testTopCharts");
@@ -141,6 +143,9 @@ function setActiveTab(tabId) {
   });
   if (stopRandomScanButton) {
     stopRandomScanButton.toggleAttribute("hidden", tabId !== "random");
+  }
+  if (downloadApkButton) {
+    downloadApkButton.toggleAttribute("hidden", tabId !== "aurora");
   }
 }
 
@@ -476,6 +481,76 @@ async function startScan() {
   await submitScan(payload, activePanel);
 }
 
+async function startDownload() {
+  if (scanInFlight) {
+    alert("A scan is already running.");
+    return;
+  }
+  const activePanel = getActivePanel();
+  if (!activePanel || !activePanel.classList.contains("active") || activePanel.dataset.tab !== "aurora") {
+    alert("Switch to the Aurora Download tab to download an APK.");
+    return;
+  }
+  const payload = formToPayload(auroraForm);
+  if (!payload.package_name) {
+    alert("Package or app name is required.");
+    return;
+  }
+  payload.aurora_mode = "anonymous";
+
+  const base = getApiBase();
+  const originalLabel = downloadApkButton ? downloadApkButton.textContent : "Download APK Only";
+  if (downloadApkButton) {
+    downloadApkButton.disabled = true;
+    downloadApkButton.textContent = "Downloading...";
+  }
+  if (downloadResult) {
+    downloadResult.textContent = "Starting download...";
+  }
+  setScanProgress(true, "Downloading APK...");
+  setProgressDetail(`Downloading ${payload.package_name}...`);
+  appendProgressLog(`Submitting APK download for ${payload.package_name}...`);
+  scanInFlight = true;
+
+  try {
+    const resp = await fetch(`${base}/downloads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Failed to download APK");
+    }
+    const job = await resp.json();
+    const downloadUrl = `${base}/apks/${job.id}/download`;
+    if (downloadResult) {
+      downloadResult.innerHTML = `Ready: <a class="btn-link" href="${downloadUrl}">Download APK</a>`;
+    }
+    if (scanProgressAction) {
+      scanProgressAction.innerHTML = `<a href="${downloadUrl}">Download APK</a>`;
+    }
+    appendProgressLog(`APK ready: ${downloadUrl}`);
+    window.location.href = downloadUrl;
+    updateProgressBar("completed", 100, "download_completed");
+  } catch (err) {
+    console.error("Download failed", err);
+    if (downloadResult) {
+      downloadResult.textContent = err.message || "Download failed.";
+    }
+    updateProgressBar("failed", 100, "download_failed");
+    setProgressDetail(err.message || "Download failed.");
+    appendProgressLog(`Error: ${err.message || "Download failed."}`);
+    alert(err.message || "Download failed.");
+  } finally {
+    if (downloadApkButton) {
+      downloadApkButton.disabled = false;
+      downloadApkButton.textContent = originalLabel;
+    }
+    scanInFlight = false;
+  }
+}
+
 async function stopRandomScan() {
   const base = getApiBase();
   const jobId = activeRandomJobId || localStorage.getItem("randomJobId");
@@ -563,6 +638,13 @@ startScanButton.addEventListener("click", (event) => {
   event.preventDefault();
   startScan();
 });
+
+if (downloadApkButton) {
+  downloadApkButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    startDownload();
+  });
+}
 
 if (stopRandomScanButton) {
   stopRandomScanButton.addEventListener("click", (event) => {

@@ -264,8 +264,10 @@ async function expandJobs(jobs) {
           const entries = Array.from(byPackage.values());
           const progressPackage = isPackageName(job.progress_item) ? job.progress_item : "";
           if (isRunning && progressPackage) {
-            const exists = entries.some((entry) => entry.package_name === progressPackage);
-            if (!exists) {
+            const existing = entries.find((entry) => entry.package_name === progressPackage);
+            if (existing) {
+              existing.status = "running";
+            } else {
               entries.unshift({
                 id: `${job.id}:${progressPackage}`,
                 job_id: job.id,

@@ -917,6 +917,8 @@ async function loadScan() {
 
     if (selectedPackage && ["aurora_random", "search"].includes(getScanSource(job))) {
       let foundEntry = false;
+      const baseStatus = job.status || "running";
+      const jobRunning = !["failed", "completed", "stopped"].includes(baseStatus);
       try {
         const batchResp = await fetch(`${base}/jobs/${job.id}/batch`);
         if (batchResp.ok) {
@@ -964,6 +966,14 @@ async function loadScan() {
         }
       } catch (err) {
         console.error("Failed to load batch entry", err);
+      }
+      if (jobRunning && foundEntry) {
+        const currentPackage = isPackageName(job.progress_item) ? job.progress_item : "";
+        if (currentPackage && currentPackage === selectedPackage) {
+          job.status = "running";
+        } else {
+          job.status = "completed";
+        }
       }
       if (!foundEntry) {
         job.package_name = selectedPackage;
