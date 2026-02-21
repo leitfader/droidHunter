@@ -1,3 +1,4 @@
+import html as html_lib
 import json
 import os
 import re
@@ -37,19 +38,30 @@ PLAY_SUGGEST_URLS = [
 ]
 PACKAGE_CANDIDATE_PATTERNS = [
     re.compile(r"/store/apps/details\\?id=([A-Za-z0-9._-]+)"),
+    re.compile(r"/store/apps/details\?id=([A-Za-z0-9._-]+)"),
     re.compile(r"details\\?id=([A-Za-z0-9._-]+)"),
+    re.compile(r"details\?id=([A-Za-z0-9._-]+)"),
     re.compile(r"data-docid=\"([A-Za-z0-9._-]+)\""),
+    re.compile(r"id=([A-Za-z0-9._-]+)"),
 ]
 PLAY_URL_HOSTS = {"play.google.com", "market.android.com"}
+
+
+def _normalize_play_text(text: str) -> str:
+    if not text:
+        return text
+    normalized = text.replace("\\u003d", "=").replace("\\u003f", "?").replace("\\u0026", "&")
+    return html_lib.unescape(normalized)
 
 
 def _extract_package_candidates(html: str) -> list[str]:
     if not html:
         return []
+    normalized = _normalize_play_text(html)
     seen = set()
     results: list[str] = []
     for pattern in PACKAGE_CANDIDATE_PATTERNS:
-        for match in pattern.findall(html):
+        for match in pattern.findall(normalized):
             if not match:
                 continue
             candidate = match.strip()
