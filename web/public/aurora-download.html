@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>droidHunter - Aurora Download</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <circle cx="50" cy="50" r="46" class="logo-ring" />
+              <path class="logo-blade" d="M50 8 L66 34 L50 40 Z" />
+              <path class="logo-blade" d="M92 50 L66 66 L60 50 Z" />
+              <path class="logo-blade" d="M50 92 L34 66 L50 60 Z" />
+              <path class="logo-blade" d="M8 50 L34 34 L40 50 Z" />
+              <path class="logo-blade" d="M22 22 L44 30 L36 44 Z" />
+              <path class="logo-blade" d="M78 22 L70 44 L56 30 Z" />
+            </svg>
+          </div>
+          <div>
+            <h1>droidHunter</h1>
+            <p>Aurora download console</p>
+            <nav class="nav">
+              <a href="/index.html">New Scan</a>
+              <a href="/scans/">Scans</a>
+              <a href="/apks.html">APKs</a>
+              <a href="/liveleaks.html">Liveleaks</a>
+              <a class="active" href="/aurora-download.html">Download</a>
+            </nav>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="api-card">
+            <div class="api-row">
+              <span class="label">API</span>
+              <span id="apiStatus" class="status-pill">Checking...</span>
+            </div>
+            <div class="api-row">
+              <input id="apiBase" type="text" placeholder="http://localhost:8000" />
+              <button id="saveApiBase" class="secondary">Save</button>
+            </div>
+          </div>
+          <div class="theme-toggle">
+            <button id="themeToggle" class="secondary" type="button">Night Mode</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="scans-header">
+          <div>
+            <h2>Aurora Download</h2>
+            <p class="hint">Download the base APK from Google Play via Aurora's anonymous token dispenser.</p>
+          </div>
+        </div>
+
+        <form id="downloadForm" class="options">
+          <div class="grid">
+            <label class="field">
+              <span>Package or App Name</span>
+              <input name="package_name" type="text" placeholder="com.example.app or Spotify" required />
+            </label>
+          </div>
+
+          <details class="advanced">
+            <summary>Advanced options</summary>
+            <div class="grid">
+              <label class="field">
+                <span>Dispenser URL</span>
+                <input name="dispenser_url" type="text" placeholder="https://auroraoss.com/api/auth" />
+              </label>
+              <label class="field">
+                <span>Locale</span>
+                <input name="locale" type="text" placeholder="en-US" />
+              </label>
+              <label class="field">
+                <span>Device Props Path</span>
+                <input name="device_props" type="text" placeholder="/path/to/device.properties" />
+              </label>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button id="startDownload" type="submit">Download APK</button>
+          </div>
+          <p class="hint">Only download apps you own or have permission to test.</p>
+        </form>
+
+        <div id="downloadResult" class="hint"></div>
+      </section>
+    </div>
+    <script src="/theme.js"></script>
+    <script src="/aurora-download.js"></script>
+  </body>
+</html>

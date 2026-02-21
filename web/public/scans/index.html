@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>droidHunter - Scans</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <circle cx="50" cy="50" r="46" class="logo-ring" />
+              <path class="logo-blade" d="M50 8 L66 34 L50 40 Z" />
+              <path class="logo-blade" d="M92 50 L66 66 L60 50 Z" />
+              <path class="logo-blade" d="M50 92 L34 66 L50 60 Z" />
+              <path class="logo-blade" d="M8 50 L34 34 L40 50 Z" />
+              <path class="logo-blade" d="M22 22 L44 30 L36 44 Z" />
+              <path class="logo-blade" d="M78 22 L70 44 L56 30 Z" />
+            </svg>
+          </div>
+          <div>
+            <h1>droidHunter</h1>
+            <p>Android Firebase scanning console</p>
+            <nav class="nav">
+              <a href="/index.html">New Scan</a>
+              <a class="active" href="/scans/">Scans</a>
+              <a href="/apks.html">APKs</a>
+              <a href="/liveleaks.html">Liveleaks</a>
+            </nav>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="api-card">
+            <div class="api-row">
+              <span class="label">API</span>
+              <span id="apiStatus" class="status-pill">Checking...</span>
+            </div>
+            <div class="api-row">
+              <input id="apiBase" type="text" placeholder="http://localhost:8000" />
+              <button id="saveApiBase" class="secondary">Save</button>
+            </div>
+          </div>
+          <div class="theme-toggle">
+            <button id="themeToggle" class="secondary" type="button">Night Mode</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="scans-header">
+          <div>
+            <h2>Scans</h2>
+            <p class="hint">Browse all scans and open details pages.</p>
+          </div>
+          <div class="filters">
+            <input id="scanSearch" type="text" placeholder="Search by package or job ID" />
+            <select id="statusFilter">
+              <option value="all">All statuses</option>
+              <option value="running">Running</option>
+              <option value="completed">Completed</option>
+              <option value="stopped">Stopped</option>
+              <option value="failed">Failed</option>
+            </select>
+            <select id="sourceFilter">
+              <option value="all">All sources</option>
+              <option value="aurora">Searched</option>
+              <option value="automated_pool">Automated Pool</option>
+              <option value="local">Local</option>
+              <option value="project">Project IDs</option>
+              <option value="apk_dir">APK Directory</option>
+              <option value="device">ADB Device</option>
+            </select>
+            <button id="refreshScans" class="secondary">Refresh</button>
+          </div>
+        </div>
+        <div id="scansList" class="scans-list"></div>
+      </section>
+    </div>
+    <script src="/theme.js"></script>
+    <script src="/scans/index.js"></script>
+  </body>
+</html>

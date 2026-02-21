@@ -1,0 +1,31 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node
+web/node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+data/apks/
+data/results/
+data/jobs/
+error.log
+*.apk
+*.har
+
+# Aurora downloader build output
+aurora-downloader/build/
+aurora-downloader/.gradle/
+
+# OS/editor
+.DS_Store

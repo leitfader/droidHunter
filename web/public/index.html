@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>droidHunter</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">
+              <svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                 viewBox="0 0 623.6 623.6" enable-background="new 0 0 623.6 623.6" xml:space="preserve">
+                <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M437.1,239.5c-18.6-14-38.9-27.4-60.5-39.9
+                c-21.7-12.5-43.4-23.3-64.8-32.5c-35.5-15.2-70-25.6-101.6-31.3c-68.6-12.2-123.3-1.4-143.9,34.2l0,0
+                c49-84.7,140.6-141.7,245.5-141.7c41.2,0,77.9,42,101.6,107.5C424.3,166,432.5,201.1,437.1,239.5z"/>
+                <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M515,311.8c-20.7,24.5-47,49.2-77.9,72.4
+                 c2.8-23.1,4.3-47.3,4.3-72.4s-1.5-49.3-4.3-72.4c-4.6-38.3-12.8-73.5-23.7-103.6C389.7,70.3,353,28.3,311.8,28.3
+                 c104.9,0,196.5,57,245.5,141.7l0,0C577.9,205.7,559.8,258.5,515,311.8z"/>
+                <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M595.3,311.8c0,51.6-13.8,100-37.9,141.8l0,0
+                            c-20.6,35.7-75.3,46.4-143.9,34.2c-31.6-5.6-66.1-16.1-101.6-31.3c21.4-9.1,43.1-20,64.8-32.5c21.7-12.5,41.9-25.9,60.5-39.9
+                          c30.9-23.2,57.2-47.8,77.9-72.4c44.8-53.3,62.9-106.1,42.3-141.7l0,0C581.5,211.8,595.3,260.2,595.3,311.8z"/>
+                  <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M557.3,453.6c-49,84.7-140.6,141.7-245.5,141.7
+                          c-41.2,0-77.9-42-101.6-107.5c-10.9-30.2-19.1-65.3-23.7-103.6c18.6,14,38.9,27.4,60.5,39.9c21.7,12.5,43.4,23.4,64.8,32.5
+                          c35.5,15.2,70,25.7,101.6,31.3C482,500,536.7,489.2,557.3,453.6L557.3,453.6z"/>
+                  <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M311.8,595.3c-104.9,0-196.5-57-245.5-141.7l0,0
+                          c-20.6-35.7-2.5-88.4,42.3-141.7c20.7-24.5,47-49.2,77.9-72.4c-2.8,23.1-4.3,47.3-4.3,72.4s1.5,49.3,4.3,72.4
+                          c4.6,38.3,12.8,73.5,23.7,103.6C234,553.3,270.6,595.3,311.8,595.3z"/>
+                  <path stroke="#FFFFFF" stroke-width="5" stroke-miterlimit="10" d="M311.8,167.1c-21.4,9.1-43.1,20-64.8,32.5
+                          c-21.7,12.5-41.9,25.9-60.5,39.9c-30.9,23.2-57.2,47.8-77.9,72.4c-44.8,53.3-62.9,106.1-42.3,141.7l0,0
+                          c-24.1-41.7-37.9-90.1-37.9-141.8s13.8-100,37.9-141.8l0,0c20.6-35.7,75.3-46.4,143.9-34.2C241.8,141.5,276.3,151.9,311.8,167.1z"/>
+</svg>
+
+
+
+
+
+
+
+
+
+
+
+            </svg>
+          </div>
+          <div>
+            <h1>droidHunter</h1>
+            <p>Aperture Science Enrichment Center</p>
+            <nav class="nav">
+              <a class="active" href="/index.html">New Scan</a>
+              <a href="/scans/">Scans</a>
+              <a href="/apks.html">APKs</a>
+              <a href="/liveleaks.html">Liveleaks</a>
+            </nav>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="api-card">
+            <div class="api-row">
+              <span class="label">API</span>
+              <span id="apiStatus" class="status-pill">Checking...</span>
+            </div>
+            <div class="api-row">
+              <input id="apiBase" type="text" placeholder="http://localhost:8000" />
+              <button id="saveApiBase" class="secondary">Save</button>
+            </div>
+          </div>
+          <div class="theme-toggle">
+            <button id="themeToggle" class="secondary" type="button">Night Mode</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+        <section class="panel main-panel">
+          <div class="tabs">
+            <button class="tab active" data-tab="aurora">Aurora Download</button>
+            <button class="tab" data-tab="random">Aurora Random</button>
+            <button class="tab" data-tab="local">Local APK</button>
+            <button class="tab" data-tab="project">Project IDs</button>
+            <button class="tab" data-tab="device">ADB Device</button>
+          </div>
+
+          <div class="tab-panels">
+            <form id="auroraForm" class="tab-panel active" data-tab="aurora">
+              <input type="hidden" name="aurora_mode" value="anonymous" />
+              <div class="grid">
+                <label class="field">
+                  <span>Package or App Name</span>
+                  <input name="package_name" type="text" placeholder="com.example.app or Spotify" />
+                </label>
+              </div>
+              <details class="advanced">
+                <summary>Aurora download options</summary>
+                <div class="grid">
+                  <label class="field">
+                    <span>Dispenser URL</span>
+                    <input name="dispenser_url" type="text" placeholder="https://auroraoss.com/api/auth" />
+                  </label>
+                  <label class="field">
+                    <span>Locale</span>
+                    <input name="locale" type="text" placeholder="all regions (default)" />
+                  </label>
+                  <label class="field">
+                    <span>Device Props Path</span>
+                    <input name="device_props" type="text" placeholder="/path/to/device.properties" />
+                  </label>
+                </div>
+              </details>
+            </form>
+
+            <form id="randomForm" class="tab-panel" data-tab="random">
+              <div class="grid">
+                <label class="field">
+                  <span>Random Terms File (optional)</span>
+                  <input name="random_terms_file" type="text" placeholder="/path/to/terms.txt" />
+                </label>
+                <label class="field">
+                  <span>Random Source</span>
+                  <select name="random_source">
+                    <option value="auto" selected>Auto (Top Charts → Search)</option>
+                    <option value="charts">Top Charts Only</option>
+                    <option value="search">Keyword Search Only</option>
+                  </select>
+                </label>
+                <label class="field checkbox">
+                  <input name="aurora_random" type="checkbox" checked />
+                  <span>Run Aurora Random Scan</span>
+                </label>
+                <label class="field">
+                  <span>Scan Count (when not continuous)</span>
+                  <input name="random_count" type="number" min="1" placeholder="5" />
+                </label>
+                <label class="field checkbox">
+                  <input name="random_continuous" type="checkbox" checked />
+                  <span>Continuous (run until stopped)</span>
+                </label>
+              </div>
+              <div class="grid">
+                <label class="field">
+                  <span>Top Chart</span>
+                  <select name="random_chart">
+                    <option value="TOP_SELLING_FREE" selected>Top Free</option>
+                    <option value="TOP_GROSSING">Top Grossing</option>
+                    <option value="MOVERS_SHAKERS">Trending</option>
+                    <option value="TOP_SELLING_PAID">Top Paid</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Chart Type</span>
+                  <select name="random_chart_type">
+                    <option value="APPLICATION" selected>Applications</option>
+                    <option value="GAME">Games</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Chart Limit</span>
+                  <input name="random_chart_limit" type="number" min="1" placeholder="200" />
+                </label>
+              </div>
+              <div class="options-toolbar">
+                <button id="testTopCharts" class="secondary" type="button">Test Top Charts</button>
+                <div id="testTopChartsResult" class="hint"></div>
+              </div>
+              <details class="advanced">
+                <summary>Aurora download options</summary>
+                <div class="grid">
+                  <label class="field">
+                    <span>Dispenser URL</span>
+                    <input name="dispenser_url" type="text" placeholder="https://auroraoss.com/api/auth" />
+                  </label>
+                  <label class="field">
+                    <span>Locale</span>
+                    <input name="locale" type="text" placeholder="all regions (default)" />
+                  </label>
+                  <label class="field">
+                    <span>Device Props Path</span>
+                    <input name="device_props" type="text" placeholder="/path/to/device.properties" />
+                  </label>
+                </div>
+              </details>
+              <p class="hint">
+                Randomly searches Google Play and scans each APK one-by-one. APKs are deleted after each scan.
+                Uncheck continuous mode to scan a fixed count. Advanced scan options (JADX, signatures, remote config, fuzzing, secrets) are forced on.
+              </p>
+            </form>
+
+            <form id="localForm" class="tab-panel" data-tab="local">
+              <input type="hidden" name="aurora_mode" value="local" />
+              <div class="grid">
+                <label class="field">
+                  <span>Local APK Path</span>
+                  <input name="apk_path" type="text" placeholder="/path/to/app.apk" />
+                </label>
+                <label class="field">
+                  <span>APK Directory</span>
+                  <input name="apk_dir" type="text" placeholder="/path/to/apk_dir" />
+                </label>
+              </div>
+            </form>
+
+            <form id="projectForm" class="tab-panel" data-tab="project">
+              <div class="grid">
+                <label class="field">
+                  <span>Project ID(s)</span>
+                  <input name="project_id" type="text" placeholder="project-id-1,project-id-2" />
+                </label>
+                <label class="field">
+                  <span>Project ID File</span>
+                  <input name="project_id_file" type="text" placeholder="/path/to/project_ids.txt" />
+                </label>
+                <label class="field">
+                  <span>DNS File</span>
+                  <input name="dns_file" type="text" placeholder="/path/to/dns.txt" />
+                </label>
+                <label class="field">
+                  <span>Resume Path</span>
+                  <input name="resume_path" type="text" placeholder="/path/to/results_dir" />
+                </label>
+                <label class="field">
+                  <span>Manual API Key</span>
+                  <input name="api_key" type="text" placeholder="AIza..." />
+                </label>
+                <label class="field">
+                  <span>Manual App ID</span>
+                  <input name="app_id" type="text" placeholder="1:1234567890:android:abcdef" />
+                </label>
+                <label class="field">
+                  <span>Package Name (optional)</span>
+                  <input name="package_name" type="text" placeholder="com.example.app" />
+                </label>
+              </div>
+              <p class="hint">Provide only one input type (Project IDs, file, DNS file, or resume path).</p>
+            </form>
+
+            <form id="deviceForm" class="tab-panel" data-tab="device">
+              <div class="grid">
+                <label class="field">
+                  <span>ADB Serial (optional)</span>
+                  <input name="adb_serial" type="text" placeholder="emulator-5554 or device serial" />
+                </label>
+                <label class="field checkbox">
+                  <input name="adb_scan" type="checkbox" checked />
+                  <span>Scan all non-system apps from device</span>
+                </label>
+              </div>
+              <p class="hint">Requires `adb` on the server and a connected device with USB debugging enabled.</p>
+            </form>
+          </div>
+
+          <details class="advanced">
+            <summary>Advanced options</summary>
+            <form id="scanOptions" class="options">
+              <div class="options-toolbar">
+                <button id="deepScanPreset" class="secondary" type="button">Deep Scan</button>
+                <span class="hint">Turns on JADX, signatures, secrets, remote config, and Firestore fuzzing.</span>
+              </div>
+              <div class="grid">
+                <label class="field">
+                  <span>Scan Rate (req/s)</span>
+                  <input name="scan_rate" type="number" step="0.1" min="0.1" value="1.0" />
+                </label>
+                <label class="field">
+                  <span>Timeout Minutes</span>
+                  <input name="timeout_minutes" type="number" min="1" placeholder="30" />
+                </label>
+                <label class="field checkbox">
+                  <input name="fast_extract" type="checkbox" />
+                  <span>Fast Extract (DEX-only)</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="use_jadx" type="checkbox" />
+                  <span>Use JADX (deep extract)</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="jadx_auto_install" type="checkbox" />
+                  <span>Auto-install JADX</span>
+                </label>
+                <label class="field">
+                  <span>JADX Timeout (minutes)</span>
+                  <input name="jadx_timeout_minutes" type="number" min="5" placeholder="30" />
+                </label>
+                <label class="field checkbox">
+                  <input name="extract_signatures" type="checkbox" />
+                  <span>Extract APK Certificates</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="secrets_scan" type="checkbox" checked />
+                  <span>Secrets Scan (TruffleHog)</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="read_config" type="checkbox" checked />
+                  <span>Scan Remote Config</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="fuzz_collections" type="checkbox" />
+                  <span>Fuzz Firestore Collections</span>
+                </label>
+                <label class="field">
+                  <span>Fuzz Wordlist Path</span>
+                  <input name="fuzz_wordlist" type="text" placeholder="/path/to/firestore-collections.txt" />
+                </label>
+                <label class="field">
+                  <span>Proxy URL</span>
+                  <input name="proxy_url" type="text" placeholder="http://127.0.0.1:8080" />
+                </label>
+                <label class="field">
+                  <span>Resume Auth File</span>
+                  <input name="resume_auth_file" type="text" placeholder="/path/to/auth_data.json" />
+                </label>
+                <label class="field checkbox">
+                  <input name="write_enabled" type="checkbox" />
+                  <span>Enable Write Tests</span>
+                </label>
+                <label class="field checkbox">
+                  <input name="auth_enabled" type="checkbox" />
+                  <span>Run Authenticated Scan</span>
+                </label>
+                <label class="field">
+                  <span>Auth Email</span>
+                  <input name="auth_email" type="email" placeholder="scanner@example.com" />
+                </label>
+                <label class="field">
+                  <span>Auth Password</span>
+                  <input name="auth_password" type="password" placeholder="********" />
+                </label>
+              </div>
+            </form>
+          </details>
+
+          <div class="actions">
+            <button id="startScan">Start Scan</button>
+            <button id="stopRandomScan" class="secondary" type="button" hidden>Stop Random Scan</button>
+            <button type="button" id="refreshApks" class="secondary">Refresh APKs</button>
+          </div>
+          <div id="scanProgress" class="progress-row" hidden>
+            <div id="scanProgressLabel" class="progress-label">Starting scan...</div>
+            <div id="scanProgressBar" class="progress-bar is-indeterminate" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+            <div id="scanProgressDetail" class="progress-detail"></div>
+            <div id="scanProgressLog" class="progress-log"></div>
+            <div id="scanProgressAction" class="progress-action"></div>
+          </div>
+          <p class="hint">
+            Enter a package name or app name. Aurora Download fetches the base APK from Google Play via Aurora's anonymous token dispenser.
+            View scan results in the Scans page.
+          </p>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <h3>Recent APKs</h3>
+            <div id="apksList" class="list"></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+    <script src="/theme.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
