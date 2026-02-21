@@ -71,6 +71,8 @@ class CreateJobRequest(BaseModel):
     processes: Optional[int] = None
     timeout_minutes: Optional[int] = None
     keep_apk: bool = False
+    search_query: Optional[str] = Field(None, description="Keyword search query")
+    search_limit: Optional[int] = Field(None, description="Number of search results to scan")
 
 
 class TopChartsRequest(BaseModel):
@@ -150,6 +152,7 @@ def _validate_request(payload: CreateJobRequest) -> None:
     if payload.aurora_random:
         if (
             payload.package_name
+            or payload.search_query
             or payload.apk_path
             or payload.apk_dir
             or payload.project_id
@@ -176,6 +179,7 @@ def _validate_request(payload: CreateJobRequest) -> None:
         "apk_dir": bool(payload.apk_dir),
         "adb_scan": bool(payload.adb_scan),
         "aurora_random": bool(payload.aurora_random),
+        "search_query": bool(payload.search_query),
         "project_id": bool(payload.project_id),
         "project_id_file": bool(payload.project_id_file),
         "dns_file": bool(payload.dns_file),
@@ -187,7 +191,7 @@ def _validate_request(payload: CreateJobRequest) -> None:
     if not provided_inputs:
         raise HTTPException(
             status_code=400,
-            detail="Provide package_name, apk_path, apk_dir, adb_scan, aurora_random, project_id, project_id_file, dns_file, or resume_path.",
+            detail="Provide package_name, search_query, apk_path, apk_dir, adb_scan, aurora_random, project_id, project_id_file, dns_file, or resume_path.",
         )
     if len(provided_inputs) > 1:
         raise HTTPException(
@@ -203,13 +207,15 @@ def _validate_request(payload: CreateJobRequest) -> None:
             )
         if mode == "local" and not payload.apk_path:
             raise HTTPException(status_code=400, detail="aurora_mode=local requires apk_path.")
-        if mode == "anonymous" and not payload.package_name:
+        if mode == "anonymous" and not (payload.package_name or payload.search_query):
             raise HTTPException(
                 status_code=400,
-                detail="aurora_mode=anonymous requires package_name.",
+                detail="aurora_mode=anonymous requires package_name or search_query.",
             )
     if payload.aurora_random and mode == "local":
         raise HTTPException(status_code=400, detail="aurora_random requires aurora_mode=anonymous.")
+    if payload.search_query and mode == "local":
+        raise HTTPException(status_code=400, detail="search_query requires aurora_mode=anonymous.")
 
     if payload.project_id_file:
         path = Path(payload.project_id_file).expanduser()
@@ -248,6 +254,8 @@ def _validate_request(payload: CreateJobRequest) -> None:
             raise HTTPException(status_code=400, detail="random_chart_limit must be greater than 0.")
         if payload.random_search_timeout is not None and payload.random_search_timeout <= 0:
             raise HTTPException(status_code=400, detail="random_search_timeout must be greater than 0.")
+    if payload.search_limit is not None and payload.search_limit <= 0:
+        raise HTTPException(status_code=400, detail="search_limit must be greater than 0.")
     if payload.auth_enabled and (not payload.auth_email or not payload.auth_password):
         raise HTTPException(status_code=400, detail="auth_email and auth_password required for auth_enabled.")
 
@@ -431,6 +439,8 @@ def _write_config(
         "api_key": payload.api_key,
         "app_id": payload.app_id,
         "package_name": payload.package_name,
+        "search_query": payload.search_query,
+        "search_limit": payload.search_limit,
         "dispenser_url": payload.dispenser_url,
         "device_props": payload.device_props,
         "locale": payload.locale,
@@ -576,6 +586,7 @@ def create_download(payload: CreateJobRequest) -> Dict[str, Any]:
         or payload.apk_dir
         or payload.adb_scan
         or payload.aurora_random
+        or payload.search_query
     ):
         raise HTTPException(
             status_code=400,
@@ -641,6 +652,8 @@ def create_job(payload: CreateJobRequest) -> Dict[str, Any]:
 
     if payload.aurora_random:
         scan_source = "aurora_random"
+    elif payload.search_query:
+        scan_source = "search"
     elif payload.adb_scan:
         scan_source = "device"
     elif payload.apk_dir:
@@ -654,11 +667,12 @@ def create_job(payload: CreateJobRequest) -> Dict[str, Any]:
     else:
         scan_source = "unknown"
 
+    display_name = payload.package_name or payload.search_query
     job = {
         "id": job_id,
         "created_at": _now_iso(),
         "status": "running",
-        "package_name": payload.package_name,
+        "package_name": display_name,
         "apk_path": str(apk_path) if apk_path else None,
         "aurora_mode": payload.aurora_mode,
         "dispenser_url": payload.dispenser_url,
@@ -858,7 +872,7 @@ def get_job_batch(job_id: str) -> List[Dict[str, Any]]:
     job = store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    if job.get("scan_source") != "aurora_random":
+    if job.get("scan_source") not in {"aurora_random", "search"}:
         return []
     output_root = Path(job.get("output_root") or "").resolve()
     if not output_root.exists():

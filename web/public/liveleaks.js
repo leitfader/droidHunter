@@ -119,6 +119,7 @@ function formatSourceLabel(source) {
   const map = {
     aurora: "SEARCHED",
     aurora_random: "AUTOMATED POOL",
+    search: "KEYWORD SEARCH",
     local: "LOCAL",
     project: "PROJECT",
     apk_dir: "APK DIR",

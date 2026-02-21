@@ -118,6 +118,7 @@ function formatSourceLabel(source) {
   const map = {
     aurora: "SEARCHED",
     aurora_random: "AUTOMATED POOL",
+    search: "KEYWORD SEARCH",
     local: "LOCAL",
     project: "PROJECT",
     apk_dir: "APK DIR",
@@ -146,7 +147,7 @@ function renderScanRow(job) {
     ? `&package=${encodeURIComponent(job.package_name)}`
     : "";
   const viewLink = `/scans/detail.html?id=${jobId}${packageParam}`;
-  const isAutomated = getScanSource(job) === "aurora_random";
+  const isAutomated = ["aurora_random", "search"].includes(getScanSource(job));
   const deleteDisabled = status === "running";
   const stopDisabled = status !== "running";
   return `
@@ -222,15 +223,16 @@ async function loadJobs() {
 
 async function expandJobs(jobs) {
   const base = getApiBase();
-  const randomJobs = jobs.filter((job) => getScanSource(job) === "aurora_random");
-  if (!randomJobs.length) {
+  const batchJobs = jobs.filter((job) => ["aurora_random", "search"].includes(getScanSource(job)));
+  if (!batchJobs.length) {
     return jobs;
   }
   const batchMap = new Map();
   await Promise.all(
-    randomJobs.map(async (job) => {
+    batchJobs.map(async (job) => {
       const effectiveStatus = getEffectiveStatus(job);
       const isRunning = effectiveStatus === "running";
+      const jobSource = getScanSource(job);
       try {
         const resp = await fetch(`${base}/jobs/${job.id}/batch`);
         if (!resp.ok) {
@@ -253,7 +255,7 @@ async function expandJobs(jobs) {
                 status: entryStatus,
                 package_name: name,
                 summary: {},
-                scan_source: "aurora_random",
+                scan_source: jobSource,
               };
               byPackage.set(name, item);
             }
@@ -271,7 +273,7 @@ async function expandJobs(jobs) {
                 status: "running",
                 package_name: progressPackage,
                 summary: {},
-                scan_source: "aurora_random",
+                scan_source: jobSource,
               });
             }
           }
@@ -291,7 +293,7 @@ async function expandJobs(jobs) {
             status: "running",
             package_name: progressPackage,
             summary: [],
-            scan_source: "aurora_random",
+            scan_source: jobSource,
             mode: job.progress_mode,
           },
         ]);
@@ -304,7 +306,7 @@ async function expandJobs(jobs) {
             status: effectiveStatus,
             package_name: getWaitingLabel(job),
             summary: job.summary || [],
-            scan_source: "aurora_random",
+            scan_source: jobSource,
           },
         ]);
       }
@@ -313,7 +315,7 @@ async function expandJobs(jobs) {
 
   const expanded = [];
   for (const job of jobs) {
-    if (getScanSource(job) === "aurora_random") {
+    if (["aurora_random", "search"].includes(getScanSource(job))) {
       const items = batchMap.get(job.id) || [];
       expanded.push(...items);
     } else {

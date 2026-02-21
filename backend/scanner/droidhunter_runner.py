@@ -18,6 +18,7 @@ from .aurora import (
     download_apk,
     list_top_charts,
     resolve_package_name,
+    search_packages,
 )
 from .config import DATA_DIR
 from .droidhunter_scanner import (
@@ -113,6 +114,8 @@ def run_scan(
     apk_dir = config.get("apk_dir")
     if apk_dir:
         return _run_apk_dir_scan(Path(str(apk_dir)), config, results_dir, progress_cb)
+    if config.get("search_query"):
+        return _run_search_scan(config, results_dir, progress_cb)
 
     if progress_cb:
         progress_cb("extracting_targets")
@@ -822,6 +825,193 @@ def _run_apk_dir_scan(
         "targets": combined_targets.to_dict(),
         "services": combined_services,
         "batch": batch_results,
+        "auth": {"enabled": bool(config.get("email") and config.get("password"))},
+    }
+    combined_results["status"] = "stopped" if stopped else "completed"
+    combined_results["summary"] = _build_summary(combined_results)
+
+    (results_dir / "targets.json").write_text(
+        json.dumps(combined_results.get("targets", {}), indent=2), encoding="utf-8"
+    )
+    (results_dir / "scan.json").write_text(json.dumps(combined_results, indent=2), encoding="utf-8")
+    (results_dir / "summary.json").write_text(
+        json.dumps(combined_results.get("summary", []), indent=2), encoding="utf-8"
+    )
+
+    files = collect_output_files(results_dir)
+    return {
+        "exit_code": 0,
+        "results_dir": str(results_dir),
+        "summary": combined_results.get("summary", []),
+        "files": files,
+        "status": combined_results.get("status"),
+    }
+
+
+def _run_search_scan(
+    config: Dict[str, object],
+    results_dir: Path,
+    progress_cb: Optional[Callable[..., None]],
+) -> Dict[str, object]:
+    query = str(config.get("search_query") or "").strip()
+    if not query:
+        raise ValueError("search_query is required for keyword search scans.")
+    limit_raw = config.get("search_limit") or 10
+    try:
+        limit = max(1, int(float(limit_raw)))
+    except Exception:
+        limit = 10
+
+    if progress_cb:
+        progress_cb("searching_play_store", current_package="")
+
+    try:
+        packages = search_packages(query, limit=limit)
+    except AuroraDownloadError as exc:
+        raise RuntimeError(str(exc)) from exc
+    if not packages:
+        raise RuntimeError("No packages found for search query.")
+
+    stop_file = None
+    if config.get("stop_file"):
+        stop_file = Path(str(config.get("stop_file")))
+
+    downloads_dir = results_dir / "downloads"
+    downloads_dir.mkdir(parents=True, exist_ok=True)
+
+    combined_targets = FirebaseTargets()
+    combined_services = {
+        "rtdb": {"checks": []},
+        "firestore": {"checks": [], "write_checks": []},
+        "storage": {"checks": []},
+        "remote_config": {"checks": []},
+    }
+    batch_results = []
+    failures = []
+    stopped = False
+
+    timeout_minutes = _coerce_float(config.get("timeout_minutes"), 0)
+    timeout_seconds = timeout_minutes * 60 if timeout_minutes > 0 else 15.0
+
+    for package_name in packages:
+        if stop_file and stop_file.exists():
+            stopped = True
+            break
+        apk_path = downloads_dir / f"{package_name}.apk"
+        try:
+            if progress_cb:
+                progress_cb("downloading_apk", current_package=package_name)
+            download_apk(
+                package_name=package_name,
+                destination=apk_path,
+                mode="anonymous",
+                dispenser_url=config.get("dispenser_url"),
+                device_props=Path(str(config.get("device_props"))).expanduser()
+                if config.get("device_props")
+                else None,
+                locale=config.get("locale"),
+            )
+        except AuroraDownloadError as exc:
+            failures.append({"package": package_name, "error": str(exc)})
+            _cleanup_downloaded_apk(apk_path)
+            continue
+
+        if progress_cb:
+            progress_cb("extracting_targets", current_package=package_name)
+        sub_dir = results_dir / package_name
+        sub_dir.mkdir(parents=True, exist_ok=True)
+
+        jadx_timeout_seconds = _coerce_float(config.get("jadx_timeout_seconds"), 0)
+        targets = extract_firebase_targets(
+            apk_path,
+            fast_extract=bool(config.get("fast_extract", False)),
+            use_jadx=bool(config.get("use_jadx", False)),
+            jadx_auto_install=bool(config.get("jadx_auto_install", False)),
+            jadx_timeout_seconds=int(jadx_timeout_seconds) or None,
+            extract_signatures=bool(config.get("extract_signatures", False)),
+        )
+        _merge_targets(combined_targets, targets)
+        if progress_cb:
+            progress_cb("targets_extracted", current_package=package_name)
+        if stop_file and stop_file.exists():
+            stopped = True
+            break
+
+        if progress_cb:
+            progress_cb("scanning_firebase", current_package=package_name)
+        scan_results = scan_firebase_targets(
+            targets=targets,
+            write_enabled=bool(config.get("write_all", False)),
+            scan_rate=_coerce_float(config.get("scan_rate"), 1.0),
+            timeout_seconds=timeout_seconds,
+            auth_email=config.get("email"),
+            auth_password=config.get("password"),
+            output_dir=sub_dir,
+            read_config=bool(config.get("read_config", True)),
+            fuzz_collections=bool(config.get("fuzz_collections", False)),
+            fuzz_wordlist=Path(str(config.get("fuzz_wordlist"))) if config.get("fuzz_wordlist") else None,
+            proxy=config.get("proxy_url"),
+            resume_auth_file=Path(str(config.get("resume_auth_file"))) if config.get("resume_auth_file") else None,
+            manual_api_key=config.get("api_key"),
+            manual_app_id=config.get("app_id"),
+        )
+        if progress_cb:
+            progress_cb("firebase_scan_completed", current_package=package_name)
+        if stop_file and stop_file.exists():
+            stopped = True
+            break
+
+        if bool(config.get("secrets_scan", True)):
+            if progress_cb:
+                progress_cb("scanning_secrets", current_package=package_name)
+            secrets = _run_trufflehog(apk_path, sub_dir, timeout_seconds=timeout_seconds)
+            scan_results["secrets"] = secrets
+            scan_results.setdefault("summary", []).append(
+                {
+                    "title": "Secrets",
+                    "counts": {
+                        "Findings": secrets.get("count", 0),
+                        "Verified": secrets.get("verified", 0),
+                        "Errors": 1 if secrets.get("error") else 0,
+                    },
+                }
+            )
+            if progress_cb:
+                progress_cb("secrets_scan_completed", current_package=package_name)
+
+        (sub_dir / "targets.json").write_text(
+            json.dumps(scan_results.get("targets", {}), indent=2), encoding="utf-8"
+        )
+        (sub_dir / "scan.json").write_text(json.dumps(scan_results, indent=2), encoding="utf-8")
+        (sub_dir / "summary.json").write_text(
+            json.dumps(scan_results.get("summary", []), indent=2), encoding="utf-8"
+        )
+
+        for service_name, service_data in (scan_results.get("services") or {}).items():
+            if service_name not in combined_services:
+                combined_services[service_name] = {"checks": []}
+            combined_services[service_name].setdefault("checks", [])
+            combined_services[service_name]["checks"].extend(service_data.get("checks", []))
+            if "write_checks" in service_data:
+                combined_services[service_name].setdefault("write_checks", [])
+                combined_services[service_name]["write_checks"].extend(service_data.get("write_checks", []))
+
+        batch_results.append(
+            {
+                "package_name": package_name,
+                "results_dir": str(sub_dir),
+                "summary": scan_results.get("summary", []),
+            }
+        )
+
+        _cleanup_downloaded_apk(apk_path)
+
+    combined_results = {
+        "targets": combined_targets.to_dict(),
+        "services": combined_services,
+        "batch": batch_results,
+        "search_query": query,
+        "failures": failures,
         "auth": {"enabled": bool(config.get("email") and config.get("password"))},
     }
     combined_results["status"] = "stopped" if stopped else "completed"

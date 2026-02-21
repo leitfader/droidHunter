@@ -181,18 +181,27 @@ def _extract_package_from_url(text: str) -> Optional[str]:
 
 
 def resolve_package_name(query: str) -> str:
+    packages = search_packages(query, limit=1)
+    if not packages:
+        raise AuroraDownloadError("No package found for that app name.")
+    return packages[0]
+
+def search_packages(query: str, limit: int = 10) -> list[str]:
     if not query:
-        raise AuroraDownloadError("Package name is required.")
+        raise AuroraDownloadError("Search query is required.")
     trimmed = query.strip()
+    if not trimmed:
+        raise AuroraDownloadError("Search query is required.")
     url_package = _extract_package_from_url(trimmed)
     if url_package:
-        return url_package
+        return [url_package]
     if PACKAGE_NAME_RE.match(trimmed):
-        return trimmed
+        return [trimmed]
 
     html = None
     errors = []
     query_encoded = quote_plus(trimmed)
+    max_limit = max(1, int(limit or 1))
 
     for template in PLAY_SUGGEST_URLS:
         url = template.format(query=query_encoded)
@@ -207,7 +216,7 @@ def resolve_package_name(query: str) -> str:
             continue
         candidates = _extract_packages_from_json(payload)
         if candidates:
-            return candidates[0]
+            return candidates[:max_limit]
 
     for template in PLAY_SEARCH_URLS:
         url = template.format(query=query_encoded)
@@ -221,11 +230,18 @@ def resolve_package_name(query: str) -> str:
             continue
 
         candidates = _extract_package_candidates(html or "")
-        if candidates:
-            return candidates[0]
         fuzzy = _extract_fuzzy_packages(html or "")
-        if fuzzy:
-            return fuzzy[0]
+        combined = []
+        seen = set()
+        for item in candidates + fuzzy:
+            if item in seen:
+                continue
+            seen.add(item)
+            combined.append(item)
+            if len(combined) >= max_limit:
+                break
+        if combined:
+            return combined
 
     if html:
         raise AuroraDownloadError("No package found for that app name.")

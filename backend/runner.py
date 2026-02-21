@@ -237,6 +237,8 @@ def _run_mode(
         "api_key": config.get("api_key"),
         "app_id": config.get("app_id"),
         "package_name": config.get("package_name"),
+        "search_query": config.get("search_query"),
+        "search_limit": config.get("search_limit"),
     }
 
     if mode == "auth":
@@ -287,6 +289,11 @@ def main() -> int:
     elif apk_dir:
         try:
             apk_count = max(1, len(list(Path(str(apk_dir)).glob("*.apk"))))
+        except Exception:
+            apk_count = 1
+    elif config.get("search_query"):
+        try:
+            apk_count = max(1, int(float(config.get("search_limit") or 10) or 10))
         except Exception:
             apk_count = 1
     tracker = ProgressTracker(progress_path, total_steps=len(modes) * steps_per_mode * apk_count)

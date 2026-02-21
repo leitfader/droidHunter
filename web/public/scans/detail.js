@@ -71,6 +71,7 @@ function formatSourceLabel(source) {
   const map = {
     aurora: "Searched",
     aurora_random: "Automated Pool",
+    search: "Keyword Search",
     local: "Local",
     project: "Project",
     apk_dir: "APK Directory",
@@ -914,7 +915,7 @@ async function loadScan() {
     const apks = apksResp.ok ? await apksResp.json() : [];
     const apk = apks.find((item) => item.job_id === job.id);
 
-    if (selectedPackage && getScanSource(job) === "aurora_random") {
+    if (selectedPackage && ["aurora_random", "search"].includes(getScanSource(job))) {
       let foundEntry = false;
       try {
         const batchResp = await fetch(`${base}/jobs/${job.id}/batch`);

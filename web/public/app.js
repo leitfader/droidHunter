@@ -118,6 +118,7 @@ function formToPayload(form) {
   if (payload.random_count) payload.random_count = parseInt(payload.random_count, 10);
   if (payload.random_attempts) payload.random_attempts = parseInt(payload.random_attempts, 10);
   if (payload.random_chart_limit) payload.random_chart_limit = parseInt(payload.random_chart_limit, 10);
+  if (payload.search_limit) payload.search_limit = parseInt(payload.search_limit, 10);
   return payload;
 }
 
