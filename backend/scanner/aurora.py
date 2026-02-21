@@ -31,6 +31,10 @@ PLAY_SEARCH_URLS = [
     "https://play.google.com/store/search?c=apps&hl=en&gl=US&q={query}",
     "https://play.google.com/store/search?c=apps&q={query}",
 ]
+PLAY_SUGGEST_URLS = [
+    "https://play.google.com/store/search/suggest?c=apps&hl=en&gl=US&q={query}",
+    "https://play.google.com/store/search/suggest?c=apps&q={query}",
+]
 PACKAGE_CANDIDATE_PATTERNS = [
     re.compile(r"/store/apps/details\\?id=([A-Za-z0-9._-]+)"),
     re.compile(r"details\\?id=([A-Za-z0-9._-]+)"),
@@ -56,6 +60,51 @@ def _extract_package_candidates(html: str) -> list[str]:
             seen.add(candidate)
             results.append(candidate)
     return results
+
+
+def _strip_xssi_prefix(text: str) -> str:
+    if not text:
+        return text
+    stripped = text.lstrip()
+    if stripped.startswith(")]}'"):
+        return stripped.split("\n", 1)[-1]
+    return text
+
+
+def _extract_packages_from_json(payload: object) -> list[str]:
+    results: list[str] = []
+    seen: set[str] = set()
+
+    def _walk(value: object) -> None:
+        if isinstance(value, str):
+            candidate = value.strip()
+            if candidate and PACKAGE_NAME_RE.match(candidate) and candidate not in seen:
+                seen.add(candidate)
+                results.append(candidate)
+            return
+        if isinstance(value, dict):
+            for item in value.values():
+                _walk(item)
+            return
+        if isinstance(value, list):
+            for item in value:
+                _walk(item)
+
+    _walk(payload)
+    return results
+
+
+def _fetch_url(url: str, timeout: int = 10) -> str:
+    request = Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
+    )
+    with urlopen(request, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="ignore")
 
 
 def _extract_package_from_url(text: str) -> Optional[str]:
@@ -99,18 +148,26 @@ def resolve_package_name(query: str) -> str:
     html = None
     errors = []
     query_encoded = quote_plus(trimmed)
+
+    for template in PLAY_SUGGEST_URLS:
+        url = template.format(query=query_encoded)
+        try:
+            raw = _fetch_url(url, timeout=8)
+            payload = json.loads(_strip_xssi_prefix(raw))
+        except (HTTPError, URLError) as exc:
+            errors.append(str(exc))
+            continue
+        except Exception as exc:
+            errors.append(str(exc))
+            continue
+        candidates = _extract_packages_from_json(payload)
+        if candidates:
+            return candidates[0]
+
     for template in PLAY_SEARCH_URLS:
         url = template.format(query=query_encoded)
-        request = Request(
-            url,
-            headers={
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-                "Accept-Language": "en-US,en;q=0.9",
-            },
-        )
         try:
-            with urlopen(request, timeout=10) as resp:
-                html = resp.read().decode("utf-8", errors="ignore")
+            html = _fetch_url(url, timeout=10)
         except (HTTPError, URLError) as exc:
             errors.append(str(exc))
             continue
